@@ -1,0 +1,248 @@
+\documentclass{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{fullpage}
+\usepackage[margin=1cm]{caption}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{multicol}
+\usepackage{float}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{graphicx}
+
+
+
+
+
+    \lstset{
+    language=R,
+    basicstyle=\scriptsize\ttfamily,
+    commentstyle=\ttfamily\color{gray},
+    numbers=left,
+    numberstyle=\ttfamily\color{gray}\footnotesize,
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{white},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    frame=single,
+    tabsize=2,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false,
+    title=\lstname,
+    escapeinside={},
+    keywordstyle={},
+    morekeywords={}
+    }
+
+\title{Time Series Analysis of Average Annual River Flow of the Nile River at Aswan, Egypt from 1870-1945}
+\author{Megan Pagliaro \& Dylan Sosa}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+The Nile River (Fig. 1) is and has been a critical natural resource for the populations of Egypt and its surrounding areas for thousands of years. With that said, increasing human populations and evolving modern technologies have greatly impacted the river's ecology. Landscape modification, topography, and climate are just a few of the factors that can affect river flow rate. This study uses time series analysis of hydrological data\cite{hipelmcleod} collected at Aswan, Egypt to analyze the likely anthropogenic effect on the Nile River's flow rate from 1870 to 1945. We predict that the average annual river flow rate will be negatively impacted over time mostly likely driven by increases in human population sizes and colonization of the riverbed. 
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 2.5in]{river.jpeg}
+\caption{Google Earth image of present-day Nile River at Aswan, Egypt.}
+\end{center}
+\end{figure}
+
+\section{Methods}
+\subsection{Exploratory Analysis}
+We began our study by obtaining average annual river flow data from the online data library, Data Market\cite{datamarket}. Average annual river flow, which is synonymous with stream discharge rate, measures the average rate of water flowing through the Nile. The unit of measurement is cubic meters per second ($m^3/s$). First, we plotted our raw dataset (Fig. 2) to look for any trends indicating non-stationarity. We noticed a non-seasonal, yet overall decreasing pattern. The spikes and troughs are indicative of years that experienced flooding or droughts, respectively. The autocorrelation function (ACF) also indicated non-stationarity due to the slowly decreasing peaks (App. Fig. 6). Because of the necessity of stationary data in time series analysis, we first ran a Box-Cox test to determine what value of $\lambda$ would be appropriate to transform our data (App. Fig. 7). This resulted in a $\lambda$ value near zero, meaning an initial $log$ transformation was appropriate. 
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 2in]{nile.pdf}
+\caption{Plot of raw Nile River data.}
+\end{center}
+\end{figure}
+
+\subsection{Transformation}
+\subsubsection{Log Transformation}
+The resulting plot of the $log$ transformed data was nearly identical to the raw data plot (App. Fig. 8). An ACF was ran and this showed a slowly decreasing trend, indicating non-stationarity (App. Fig. 9). To confirm, an Augmented Dickey-Fuller Test was ran. This resulted in a non-significant p-value of 0.065, meaning the data failed to reject the test's null hypothesis and was non-stationary. The above results suggested the need to further transform the data using a first-order difference. 
+
+\subsubsection{First-Order Difference}
+This second transformation involved taking the first-order difference of the $log$ transformed data. The corresponding plot (App. Fig. 10) had some odd variance around the mean, but appeared to be more stationary overall and the Dickey-Fuller Test resulted in a significant p-value of $<$ 0.01. However, when we ran ACF and PACF tests on this data the output showed no significant peak also known as a borderline non-stationary pattern (App. Fig. 11). These results are indicative of the necessity to do further transformation through a second-order difference. 
+
+\subsubsection{Second-Order Difference}
+Our final transformation was a second-order difference of the $log$ transformed data. The resulting plot (Fig. 3) showed stationarity with fairly even variance around a mean of 0.00 as indicated by the red line. A significant p-value of $< 0.01$ from the Dickey-Fuller Test meant that this transformation rejected the null-hypothesis and the data was stationary. The presence of significant peaks in both the ACF and PACF plots (unlike the first-order difference) indicated that no further transformations were necessary. 
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 2in]{niletrans2.png}
+\caption{Plot of second-order, log transformed Nile River data.}
+\end{center}
+\end{figure}
+
+
+\section{Results}
+\subsection{Model Selection}
+After we made the data stationary with the second-order difference, we began to determine a proper model that described the data. A single negative peak in the ACF plot (circled in red) and a decaying pattern from below in the PACF plot (marked by a red line) were signatures of a moving average one process (Fig. 4). This reasoning suggested an ARIMA(0,2,1) model which is less common, but seen in special cases such as linear exponential smoothing\cite{nau}. Next, we utilized an ARMA subset plot as another tool for model selection (App. Fig. 13). This resulted in multiple rows with the same significant Bayesian Information Criterion (BIC) value which is a model selection standard. Because of this we made our selection according to the principle of maximum parsimony which states that the least complicated explanation is the most likely to be correct. With this in mind, we selected the row that indicated AR(0) and MA(1) processes. Next we used the extended autocorrelation function (EACF) (App. Fig. 12) test which again suggested AR(0) and MA(1) processes. Due to the results described above and the second-order differencing of the data, we can conclude that our data follows an \textbf{ARIMA(0,2,1)} model.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 2in]{acfpacfniletrans2.png}
+\caption{ACF and PACF plots of log transformed, second-order difference Nile River data. These plots show MA(1) signatures: there is a single negative spike in the ACF plot and a decay pattern in the PACF plot.}
+\end{center}
+\end{figure}
+
+\subsection{Model}
+After our model selection, we ran an ARIMA function with the method of maximum likelihood estimation to fit our river flow data to the ARIMA(0,2,1) model and to determine the model's parameters. The output showed $\theta_{1} = 1.00$ and provided an Akaike Information Criterion (AIC) value of $-53.96$. AIC values estimate the relative quality of a model for a given dataset with smaller values being more significant. This AIC score further supports our model selection. With $\theta_{1}$ being the only parameter to determine, the model equation is as follows:
+
+\[ \scalebox{1.5} {$\nabla^2Y_{t} = e_{t} - e_{t-1}$} \]
+
+\subsection{Forecasting}
+Due to the valuable ecological context, we decided to also run forecasting on the fitted data. Using a lead value of 60 years we predicted average stream flow from 1945 to 2004. Upper and lower bounds (in blue) were calculated using a $95\%$ confidence interval (Fig. 5). These bounds are unusually wide with a “trumpet shape” which is indicative of second-order differencing\cite{nau}. The forecasted values appear in red on the figure. According to plot of the forecasted values, average annual river flow is predicted to continue to decrease over time. 
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 2in]{forecast.png}
+\caption{Forecast of Nile River data with lead value of 60. This shows “trumpet”-shaped confidence interval shape which is characteristic of ARIMA models with two orders of non-seasonal differencing.}
+\end{center}
+\end{figure}
+
+
+\section{Discussion \& Conclusion}
+In this study we examined and analyzed average annual river flow data collected for the Nile River at Aswan, Egypt. We used various statistical methods to achieve stationarity for the data in order to select an appropriate model that could be used in forecasting. After multiple tests and validations we determined the fully transformed data followed an ARIMA(0,2,1) model with an equation of $\nabla^2Y_{t} = e_{t} - e_{t-1}$. Our forecast for the data was in concordance with our prediction that river flow will be negatively impacted as human populations and landscape modifications continue to affect the ecology of the river. The Nile River at Aswan was once a vital and critical point for hydrological measurements of the river. The results of this study also has real-world applications. Not long after this original data was published\cite{hipelmcleod}, a dam was built completely altering the river's structure and manipulating the river's flow. As a result natural river flow data can no longer be collected and subsequently used to determine the ecological state of the river. So, trend and forecasting analysis of river flow data collected before the construction of this dam can be valuable tools in understanding the abiotic and biotic effects of the stream's environment on its flow rate. 
+
+\section{Appendix}
+\subsection{Supplementary Figures}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 1.5in]{acfpacfnile.png}
+\caption{Autocorrelation (ACF) and Partial-autocorrelation (PACF) plots of Nile River data.}
+\end{center}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 2in]{bcnile.pdf}
+\caption{Box-Cox plot showing $\lambda$ is close enough to 0 that we can use $log$ to transform.}
+\end{center}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 1.5in]{lognile2.png}
+\caption{Plot of log transformed Nile River data.}
+\end{center}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 1.5in]{acfpacflognile.png}
+\caption{ACF and PACF plots of log transformed Nile River data.}
+\end{center}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 2in]{logdifnile.pdf}
+\caption{Plot of first-order differenced log transformed Nile River data.}
+\end{center}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 1.5in]{acfpacflogdifnile.png}
+\caption{ACF and PACF plots of first-order difference, log transformed Nile River data.}
+\end{center}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 1in]{eacf.png}
+\caption{Output of the sample extended artificial correlation which indicates an IMA(2,1)}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height = 2in]{subset.pdf}
+\caption{ARMA subset plot which indicates IMA(2,1)}
+\end{center}
+\end{figure}
+
+\subsection{R Code}
+\begin{lstlisting}[language=R]
+# Time Series Final Project
+# Fall 2017
+# Due: 12/05/17
+# Megan Pagliaro and Dylan Sosa
+# Dr. Haijun Gong
+
+# Dataset information: 
+# Average Annual River flow, Nile at Aswan, 1870-1945
+# From DataMarket. Source: Time Series Data Library (citing: Hipel and McLeod (1994))
+library("TSA")
+setwd("/Users/Dylan/Documents/SLU/5.1/Time Series/Project/")
+nile = ts(read.table(file = "nile.txt"), start = 1870, deltat = 1)
+plot(nile, type='o', main='Average Annual River Flow of Nile at Aswan', ylab='Average River Flow Discharge(m^3/s)', xlab='Year')
+par(mfrow=c(2,2))
+acf(nile)
+pacf(nile) #one peak, but will transform 
+
+# -------transformation-----------
+BoxCox.ar(nile) #close to 0, use log 
+nile.log = (log(nile))
+plot(nile.log, type='o', main='Log Transformed Average Annual River Flow of Nile at Aswan', ylab='Average River Flow Discharge(m^3/s)', xlab='Year') #no significant change
+par(mfrow=c(2,2))
+acf(nile.log)
+pacf(nile.log)
+
+# first order difference transformation [I(1)]
+nile.log.diff = (diff(log(nile)))
+plot(nile.log.diff, type='o', main='Average Annual River Flow of Nile at Aswan', ylab='Average River Flow Discharge(m^3/s)', xlab='Year')
+par(mfrow=c(2,2))
+acf(nile.log.diff) #No significant peaks, weak MA and need to do second order difference
+pacf(nile.log.diff) #No significant peaks, weak AR and need to do second order difference 
+
+# ------second order difference [I(2)]------
+nile.log.diff.diff = (diff(diff(log(nile))))
+nile.transformed <- nile.log.diff.diff
+abline(h=0, col = 'red')
+plot(nile.transformed, type='o', main='Transformed Average Annual River Flow of Nile at Aswan', xlab='Year', ylab='(diff(diff(log(nile))))')
+mean(nile.transformed) # very close to zero
+par(mfrow=c(2,2))
+
+acf(nile.transformed) # MA1 # Can we assume MA(1) 
+pacf(nile.transformed) # AR(1) or AR(2) 
+adf.test(nile.transformed)
+
+# --------------eacf use -----------
+eacf(nile.transformed, ar.max = 5, ma.max = 5) #Suggesting an AR(0)/MA(1). BUT because MA showing weak movement at 7, row down may be more significant, meaning MA(1)/weak AR(1),
+# eacf shows AR(0), MA(1)
+
+# ------Finding Coefficients--------
+nile.subset = armasubsets(y=nile.transformed, nar=5, nma=5, ar.method='ols')
+plot(nile.subset) 
+
+# ------Fitting model---------------
+nile.fit = arima(nile.log, order=c(0,2,1), method='ML') 
+nile.fit # These values for model. 
+# theta = 1
+plot(nile.fit)
+
+# -----------forecasting-----------
+nile.predict = predict(nile.fit, n.ahead = 60)
+nile.predict
+
+upper = nile.predict$pred + qnorm(0.975) * nile.predict$se
+lower = nile.predict$pred - qnorm(0.975) * nile.predict$se
+
+points(nile.predict$pred, col = 'red') #represent prediction mean value
+
+lines(y=upper, x = 1945:2004, col = 'green')
+lines(y=lower, x = 1945:2004, col = 'green')
+
+\end{lstlisting}
+
+\bibliographystyle{plain}
+\bibliography{references.bib}
+
+\end{document}
