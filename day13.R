@@ -1,6 +1,0 @@
-data = arima.sim(list(order=c(1,1,0),ar=c(0.7)), n=150)
-par(mfrow=c(2,2))
-plot(data,type='o')
-acf(data)
-plot(diff(data),type='o')
-acf(diff(data))
